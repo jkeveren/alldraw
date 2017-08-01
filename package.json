@@ -1,0 +1,24 @@
+{
+	"name": "multiboard",
+	"version": "0.0.0",
+	"description": "Multiplayer whiteboard",
+	"main": "server.js",
+	"scripts": {
+		"start": "node server.js",
+		"dev": "nodemon server.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/jkeveren/multiboard.git"
+	},
+	"author": "James Keveren",
+	"license": "UNLICENSED",
+	"bugs": {
+		"url": "https://github.com/jkeveren/multiboard/issues"
+	},
+	"homepage": "https://github.com/jkeveren/multiboard#readme",
+	"dependencies": {
+		"express": "^4.15.3",
+		"socket.io": "^2.0.3"
+	}
+}
