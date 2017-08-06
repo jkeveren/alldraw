@@ -15,6 +15,7 @@ var viewport = {
 }
 
 var cursor = {
+	id: undefined,
 	x: undefined,
 	y: undefined,
 	prev: {
@@ -22,8 +23,17 @@ var cursor = {
 		y: undefined
 	},
 	active: false,
-	color: '#f00'
+	color: function () {
+		var letters = '0123456789ABCDEF';
+		var color = '#';
+		for (var i = 0; i < 3; i++) {
+			color += letters[Math.floor(Math.random() * 16)];
+		}
+		return color;
+	}(),
 }
+
+var width = 30;
 
 function size() {
 	viewport.width = window.innerWidth * devicePixelRatio;
@@ -55,18 +65,9 @@ function move(e) {
 	}
 
 	socket.emit('line', {
-		x: cursor.x,
-		y: cursor.y,
-		prev: {
-			x: cursor.prev.x,
-			y: cursor.prev.y
-		},
+		cursor,
 		viewportMajor: Math.max(window.innerWidth, window.innerHeight),
-		active: cursor.active
 	});
-
-	c.clearRect(0, 0, cursorLayer.width, cursorLayer.height);
-	drawCursor(cursor.x, cursor.y);
 
 	cursor.prev.x = cursor.x;
 	cursor.prev.y = cursor.y;
@@ -76,23 +77,33 @@ function stop(e) {
 	cursor.active = false;
 }
 
-function drawCursor(x, y, active = false, color = '#f00') {
-	if (x || y) {
-		// 	c.clearRect(0, 0, cursorLayer.width, cursorLayer.height);
-		c.beginPath();
-		c.arc(x, y, 30, 0, 2 * Math.PI);
-		c.lineWidth = active ? 10 : 2;
-		c.strokeStyle = color;
-		c.shadowColor = '#fff';
-		c.shadowBlur = 5;
-		c.stroke();
-	} else {
-		console.log('nope');
-	}
+function drawCursor(data) {
+	c.clearRect(0, 0, cursorLayer.width, cursorLayer.height);
+	c.beginPath();
+	c.arc(data.x, data.y, width / 2, 0, 2 * Math.PI);
+	c.lineWidth = data.active ? 10 : 2;
+	c.strokeStyle = data.color;
+	c.shadowColor = '#fff';
+	c.shadowBlur = 5;
+	c.stroke();
+}
+
+function drawLine(data) {
+	// p.clearRect(0, 0, paintLayer.width, paintLayer.height);
+	p.beginPath();
+	p.moveTo(data.prev.x, data.prev.y);
+	p.lineTo(data.x, data.y);
+	p.lineWidth = width;
+	p.strokeStyle = data.color;
+	p.lineCap = 'round';
+	p.stroke();
 }
 
 socket.on('line', function (msg) {
 	console.log(msg);
-	drawCursor(msg.x, msg.y, msg.active ? true : false, '#0f0');
+	drawCursor(msg.cursor);
+	if (msg.cursor.active) {
+		drawLine(msg.cursor);
+	}
 });
 // }();

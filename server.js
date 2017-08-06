@@ -10,6 +10,8 @@ http.listen(process.env.PORT || 3000);
 io.on('connect', function (socket) {
 	console.log(socket.id, ' connected');
 
+	var viewportMajor;
+
 	socket.on('line', function (msg) {
 		console.log(msg);
 		io.emit('line', msg);
