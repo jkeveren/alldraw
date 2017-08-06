@@ -65,6 +65,9 @@ function move(e) {
 		active: cursor.active
 	});
 
+	c.clearRect(0, 0, cursorLayer.width, cursorLayer.height);
+	drawCursor(cursor.x, cursor.y);
+
 	cursor.prev.x = cursor.x;
 	cursor.prev.y = cursor.y;
 }
@@ -73,13 +76,13 @@ function stop(e) {
 	cursor.active = false;
 }
 
-function drawCursor(x, y, active = false) {
+function drawCursor(x, y, active = false, color = '#f00') {
 	if (x || y) {
-		c.clearRect(0, 0, cursorLayer.width, cursorLayer.height);
+		// 	c.clearRect(0, 0, cursorLayer.width, cursorLayer.height);
 		c.beginPath();
 		c.arc(x, y, 30, 0, 2 * Math.PI);
 		c.lineWidth = active ? 10 : 2;
-		c.strokeStyle = cursor.color;
+		c.strokeStyle = color;
 		c.shadowColor = '#fff';
 		c.shadowBlur = 5;
 		c.stroke();
@@ -90,6 +93,6 @@ function drawCursor(x, y, active = false) {
 
 socket.on('line', function (msg) {
 	console.log(msg);
-	drawCursor(msg.x, msg.y, msg.active ? true : false);
+	drawCursor(msg.x, msg.y, msg.active ? true : false, '#0f0');
 });
 // }();
