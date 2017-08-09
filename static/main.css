@@ -8,10 +8,28 @@ body {
 
 canvas {
 	position: fixed;
-	width: 100%;
-	height: 100%;
+	width: 100vmax;
+	height: 100vmax;
+	/* background: radial-gradient(circle at center, black 0, white 5%, white 100%); */
+}
+
+@media (orientation: portrait) {
+	canvas {
+		left: calc((100vmax - 100vmin) / -2);
+	}
+}
+
+@media (orientation: landscape) {
+	canvas {
+		top: calc((100vmax - 100vmin) / -2);
+	}
 }
 
 #cursorLayer {
-	cursor: none;
+	/* cursor: none; */
+	background: none;
+}
+
+#backupScaler {
+	display: none;
 }

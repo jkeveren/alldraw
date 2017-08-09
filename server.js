@@ -2,6 +2,8 @@ var express = require('express');
 var app = express();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
+var PImage = require('pureimage');
+var fs = require('fs');
 
 app.use(express.static(__dirname + '/static'));
 
@@ -12,9 +14,9 @@ io.on('connect', function (socket) {
 
 	var viewportMajor;
 
-	socket.on('line', function (msg) {
+	socket.on('cursor', function (msg) {
 		console.log(msg);
-		io.emit('line', msg);
+		io.emit('cursor', msg);
 	});
 
 	socket.on('disconnect', function () {
