@@ -1,133 +1,128 @@
-// Uncomment the next line and the last line in production.
-// ! function () {
-var socket = io();
+! function () {
+	var socket = io();
 
-var resolution = Math.min(screen.width, screen.height) * 2; //yea use this method instead. //yea this looks whacky, it's like that in case of multiple monitor setups. Otherwise i would have just used Math.max()
+	var paintLayer = document.getElementById('paintLayer');
+	var p = paintLayer.getContext('2d');
+	var cursorLayer = document.getElementById('cursorLayer');
+	var c = cursorLayer.getContext('2d');
+	var backupScaler = document.getElementById('backupScaler');
+	var b = backupScaler.getContext('2d');
+	var viewport = {};
+	var width = 0.005;
 
-var paintLayer = document.getElementById('paintLayer');
-var p = paintLayer.getContext('2d');
-var cursorLayer = document.getElementById('cursorLayer');
-var c = cursorLayer.getContext('2d');
-var backupScaler = document.getElementById('backupScaler');
-var b = backupScaler.getContext('2d');
-
-paintLayer.width = resolution;
-paintLayer.height = resolution;
-
-cursorLayer.width = resolution;
-cursorLayer.height = resolution;
-
-var viewport = {};
-var width = 20;
-var backup;
-
-var cursor = {
-	id: undefined,
-	x: undefined,
-	y: undefined,
-	prev: {
+	var cursor = {
+		id: undefined,
 		x: undefined,
-		y: undefined
-	},
-	active: false,
-	color: function () {
-		var letters = '0123456789ABCDEF';// Remove to prevent super light colors.
-		var color = '#';
-		for (var i = 0; i < 3; i++) {
-			color += letters[Math.floor(Math.random() * letters.length)];
+		y: undefined,
+		prev: {
+			x: undefined,
+			y: undefined
+		},
+		active: false,
+		color: function () {
+			var letters = '0123456789ABCDEF';
+			var color = '#';
+			for (var i = 0; i < 3; i++) {
+				color += letters[Math.floor(Math.random() * letters.length)];
+			}
+			return color;
+		}(),
+	}
+
+	socket.on('connect', function () {
+		cursor.id = socket.id;
+	})
+
+	var canvasResolution = Math.min(screen.width, screen.height) * 2;
+
+	paintLayer.width = canvasResolution;
+	paintLayer.height = canvasResolution;
+
+	cursorLayer.width = canvasResolution;
+	cursorLayer.height = canvasResolution;
+
+
+	function backupPaint() {
+		backupScaler.width = paintLayer.width;
+		backupScaler.height = paintLayer.height;
+		backup = p.getImageData(0, 0, paintLayer.width, paintLayer.height);
+	}
+	backupPaint();
+
+	function size() {
+		viewport.width = window.innerWidth * devicePixelRatio;
+		viewport.height = window.innerHeight * devicePixelRatio;
+
+		viewport.major = Math.max(viewport.width, viewport.height);
+	};
+	size();
+	window.addEventListener('resize', size);
+
+	cursorLayer.addEventListener('mousedown', start);
+	cursorLayer.addEventListener('mousemove', move);
+	cursorLayer.addEventListener('mouseup', stop);
+
+	cursorLayer.addEventListener('touchstart', start, { passive: true });
+	cursorLayer.addEventListener('touchmove', move, { passive: true });
+	cursorLayer.addEventListener('touchend', stop);
+	cursorLayer.addEventListener('touchcancel', stop);
+
+	function start(e) {
+		cursor.active = true;
+		cursor.prev.x = cursor.x;
+		cursor.prev.y = cursor.y;
+		// cursorLayer.style.cursor = '-webkit-grabbing';
+	}
+
+	function move(e) {
+		cursor.x = (((e.touches ? e.touches[0].clientX : e.clientX) * devicePixelRatio) - paintLayer.offsetLeft) / viewport.major;
+		cursor.y = (((e.touches ? e.touches[0].clientY : e.clientY) * devicePixelRatio) - paintLayer.offsetTop) / viewport.major;
+
+		if (!cursor.prev.x || !cursor.prev.y) {
+			cursor.prev.x = cursor.x;
+			cursor.prev.y = cursor.y;
 		}
-		return color;
-	}(),
-}
 
-function backupPaint() {
-	backupScaler.width = paintLayer.width;
-	backupScaler.height = paintLayer.height;
-	backup = p.getImageData(0, 0, paintLayer.width, paintLayer.height);
-}
-backupPaint();
+		if (cursor.id) {
+			socket.emit('cursor', cursor);
+			if (cursor.active) draw.line(cursor);
+		}
 
-function size() {
-	viewport.width = window.innerWidth * devicePixelRatio;
-	viewport.height = window.innerHeight * devicePixelRatio;
-
-	viewport.major = Math.max(viewport.width, viewport.height);
-
-	// paintLayer.width = viewport.major;
-	// paintLayer.height = viewport.major;
-
-	// cursorLayer.width = viewport.major;
-	// cursorLayer.height = viewport.major;
-
-	// var scale = (viewport.major / viewport.majorOld) || 1;
-
-	// b.putImageData(backup, 0, 0);
-	// p.save();
-	// p.scale(scale, scale);
-	// p.drawImage(backupScaler, 0, 0);
-	// p.restore();
-
-	// backupPaint();
-
-	// viewport.majorOld = viewport.major;
-};
-size();
-window.addEventListener('resize', size);
-
-cursorLayer.addEventListener('mousedown', start);
-cursorLayer.addEventListener('mousemove', move);
-cursorLayer.addEventListener('mouseup', stop);
-
-console.log(viewport.major);
-
-function start(e) {
-	cursor.active = true;
-}
-
-function move(e) {
-	cursor.x = ((e.clientX * devicePixelRatio) - paintLayer.offsetLeft) / viewport.major * resolution;
-	cursor.y = ((e.clientY * devicePixelRatio) - paintLayer.offsetTop) / viewport.major * resolution;
-
-	if (!cursor.prev.x || !cursor.prev.y) {
 		cursor.prev.x = cursor.x;
 		cursor.prev.y = cursor.y;
 	}
 
-	socket.emit('cursor', {
-		cursor,
-		viewportMajor: viewport.major,
-	});
-
-	cursor.prev.x = cursor.x;
-	cursor.prev.y = cursor.y;
-}
-
-function stop(e) {
-	cursor.active = false;
-}
-
-function drawCursor(data) {
-	c.clearRect(0, 0, cursorLayer.width, cursorLayer.height);
-	c.beginPath();
-	c.arc(data.x, data.y, (width - 2) / 2, 0, 2 * Math.PI);
-	c.lineWidth = 2;
-	c.strokeStyle = data.color;
-	c.shadowColor = '#fff';
-	c.shadowBlur = 10;
-	c.stroke();
-}
-
-socket.on('cursor', function (msg) {
-	drawCursor(msg.cursor);
-	if (msg.cursor.active) {
-		p.beginPath();
-		p.moveTo(msg.cursor.prev.x, msg.cursor.prev.y);
-		p.lineTo(msg.cursor.x, msg.cursor.y);
-		p.lineWidth = width;
-		p.strokeStyle = msg.cursor.color;
-		p.lineCap = 'round';
-		p.stroke();
-		// backupPaint();
+	function stop(e) {
+		cursor.active = false;
+		// cursorLayer.style.cursor = '-webkit-grab';
 	}
-});
-// }();
+
+	var draw = {
+		cursor: function (data) {
+			c.clearRect(0, 0, cursorLayer.width, cursorLayer.height);
+			c.beginPath();
+			c.arc(data.x * canvasResolution, data.y * canvasResolution, (width * canvasResolution - 2) / 2, 0, 2 * Math.PI);
+			c.lineWidth = 0.001 * canvasResolution;
+			c.fillStyle = data.color;
+			c.fill();
+		},
+		line: function (data) {
+			p.beginPath();
+			p.moveTo(data.prev.x * canvasResolution, data.prev.y * canvasResolution);
+			p.lineTo(data.x * canvasResolution, data.y * canvasResolution);
+			p.lineWidth = width * canvasResolution;
+			p.strokeStyle = data.color;
+			p.lineCap = 'round';
+			p.stroke();
+		}
+	}
+
+	socket.on('cursor', function (msg) {
+		if (msg.id != socket.id) {
+			draw.cursor(msg);
+			if (msg.active) draw.line(msg);
+		}
+	});
+}();
+
+
