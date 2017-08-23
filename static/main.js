@@ -1,14 +1,11 @@
 ! function () {
 	var socket = io();
 
-	var paintLayer = document.getElementById('paintLayer');
-	var p = paintLayer.getContext('2d');
-	var cursorLayer = document.getElementById('cursorLayer');
-	var c = cursorLayer.getContext('2d');
-	var backupScaler = document.getElementById('backupScaler');
-	var b = backupScaler.getContext('2d');
+	var canvas = document.getElementById('canvas');
+	var c = canvas.getContext('2d');
 	var viewport = {};
-	var width = 0.005;
+	var width = 0.01;
+	var active = false;
 
 	var cursor = {
 		id: undefined,
@@ -18,7 +15,6 @@
 			x: undefined,
 			y: undefined
 		},
-		active: false,
 		color: function () {
 			var letters = '0123456789ABCDEF';
 			var color = '#';
@@ -35,57 +31,58 @@
 
 	var canvasResolution = Math.min(screen.width, screen.height) * 2;
 
-	paintLayer.width = canvasResolution;
-	paintLayer.height = canvasResolution;
-
-	cursorLayer.width = canvasResolution;
-	cursorLayer.height = canvasResolution;
-
-
-	function backupPaint() {
-		backupScaler.width = paintLayer.width;
-		backupScaler.height = paintLayer.height;
-		backup = p.getImageData(0, 0, paintLayer.width, paintLayer.height);
-	}
-	backupPaint();
+	canvas.width = canvasResolution;
+	canvas.height = canvasResolution;
 
 	function size() {
-		viewport.width = window.innerWidth * devicePixelRatio;
-		viewport.height = window.innerHeight * devicePixelRatio;
+		viewport.width = innerWidth * devicePixelRatio;
+		viewport.height = innerHeight * devicePixelRatio;
 
 		viewport.major = Math.max(viewport.width, viewport.height);
+
+		viewport.cssMajor = Math.max(innerWidth, innerHeight);
+
+		canvas.style.width = viewport.cssMajor + 'px';
+		canvas.style.height = viewport.cssMajor + 'px';
+
+		if (innerWidth > innerHeight) {
+			canvas.style.top = (viewport.cssMajor - innerHeight) / -2 + 'px';
+		} else if (innerHeight > innerWidth) {
+			canvas.style.left = (viewport.cssMajor - innerWidth) / -2 + 'px';
+		}
 	};
 	size();
 	window.addEventListener('resize', size);
 
-	cursorLayer.addEventListener('mousedown', start);
-	cursorLayer.addEventListener('mousemove', move);
-	cursorLayer.addEventListener('mouseup', stop);
+	canvas.addEventListener('mousedown', start);
+	canvas.addEventListener('mousemove', move);
+	canvas.addEventListener('mouseup', stop);
 
-	cursorLayer.addEventListener('touchstart', start, { passive: true });
-	cursorLayer.addEventListener('touchmove', move, { passive: true });
-	cursorLayer.addEventListener('touchend', stop);
-	cursorLayer.addEventListener('touchcancel', stop);
+	canvas.addEventListener('touchstart', start, { passive: true });
+	canvas.addEventListener('touchmove', move, { passive: true });
+	canvas.addEventListener('touchend', stop);
+	canvas.addEventListener('touchcancel', stop);
 
 	function start(e) {
-		cursor.active = true;
-		cursor.prev.x = cursor.x;
-		cursor.prev.y = cursor.y;
-		// cursorLayer.style.cursor = '-webkit-grabbing';
+		active = true;
+
+		move(e)
 	}
 
 	function move(e) {
-		cursor.x = (((e.touches ? e.touches[0].clientX : e.clientX) * devicePixelRatio) - paintLayer.offsetLeft) / viewport.major;
-		cursor.y = (((e.touches ? e.touches[0].clientY : e.clientY) * devicePixelRatio) - paintLayer.offsetTop) / viewport.major;
+		var ev = e.touches ? e.touches[0] : e;
+
+		cursor.x = Number((((ev.clientX - canvas.offsetLeft) / viewport.major) * devicePixelRatio).toFixed(3));
+		cursor.y = Number((((ev.clientY - canvas.offsetTop) / viewport.major) * devicePixelRatio).toFixed(3));
 
 		if (!cursor.prev.x || !cursor.prev.y) {
 			cursor.prev.x = cursor.x;
 			cursor.prev.y = cursor.y;
 		}
 
-		if (cursor.id) {
+		if (cursor.id && active) {
 			socket.emit('cursor', cursor);
-			if (cursor.active) draw.line(cursor);
+			draw.line(cursor);
 		}
 
 		cursor.prev.x = cursor.x;
@@ -93,34 +90,24 @@
 	}
 
 	function stop(e) {
-		cursor.active = false;
-		// cursorLayer.style.cursor = '-webkit-grab';
+		active = false;
 	}
 
 	var draw = {
-		cursor: function (data) {
-			c.clearRect(0, 0, cursorLayer.width, cursorLayer.height);
-			c.beginPath();
-			c.arc(data.x * canvasResolution, data.y * canvasResolution, (width * canvasResolution - 2) / 2, 0, 2 * Math.PI);
-			c.lineWidth = 0.001 * canvasResolution;
-			c.fillStyle = data.color;
-			c.fill();
-		},
 		line: function (data) {
-			p.beginPath();
-			p.moveTo(data.prev.x * canvasResolution, data.prev.y * canvasResolution);
-			p.lineTo(data.x * canvasResolution, data.y * canvasResolution);
-			p.lineWidth = width * canvasResolution;
-			p.strokeStyle = data.color;
-			p.lineCap = 'round';
-			p.stroke();
+			c.beginPath();
+			c.moveTo(data.prev.x * canvasResolution, data.prev.y * canvasResolution);
+			c.lineTo(data.x * canvasResolution, data.y * canvasResolution);
+			c.lineWidth = width * canvasResolution;
+			c.strokeStyle = data.color;
+			c.lineCap = 'round';
+			c.stroke();
 		}
 	}
 
 	socket.on('cursor', function (msg) {
 		if (msg.id != socket.id) {
-			draw.cursor(msg);
-			if (msg.active) draw.line(msg);
+			draw.line(msg);
 		}
 	});
 }();

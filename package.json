@@ -19,7 +19,6 @@
   "homepage": "https://github.com/jkeveren/multiboard#readme",
   "dependencies": {
     "express": "^4.15.3",
-    "pureimage": "^0.1.2",
     "socket.io": "^2.0.3"
   }
 }

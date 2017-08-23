@@ -1,5 +1,6 @@
 * {
 	margin: 0;
+	padding: 0;
 }
 
 body {
@@ -8,26 +9,8 @@ body {
 
 canvas {
 	position: fixed;
-	width: 100vmax;
-	height: 100vmax;
-	/* background: radial-gradient(circle at center, black 0, white 5%, white 100%); */
-}
-
-@media (orientation: portrait) {
-	canvas {
-		left: calc((100vmax - 100vmin) / -2);
-	}
-}
-
-@media (orientation: landscape) {
-	canvas {
-		top: calc((100vmax - 100vmin) / -2);
-	}
-}
-
-#cursorLayer {
 	cursor: pointer;
-	background: none;
+	/* background: radial-gradient(circle at center, black 0, white 5%, white 100%); */
 }
 
 #backupScaler {
