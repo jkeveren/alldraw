@@ -47,7 +47,9 @@
 
 		if (innerWidth > innerHeight) {
 			canvas.style.top = (viewport.cssMajor - innerHeight) / -2 + 'px';
-		} else if (innerHeight > innerWidth) {
+			canvas.style.left = 0;
+		} else {
+			canvas.style.top = 0;
 			canvas.style.left = (viewport.cssMajor - innerWidth) / -2 + 'px';
 		}
 	};
