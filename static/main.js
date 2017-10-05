@@ -29,7 +29,7 @@
 		cursor.id = socket.id;
 	})
 
-	var canvasResolution = Math.min(screen.width, screen.height) * 2;
+	var canvasResolution = Math.min(screen.width, screen.height) * 2 * devicePixelRatio;
 
 	canvas.width = canvasResolution;
 	canvas.height = canvasResolution;
