@@ -93,6 +93,8 @@
 
 	function stop(e) {
 		active = false;
+		cursor.prev.x = undefined;
+		cursor.prev.y = undefined;
 	}
 
 	var draw = {
