@@ -13,7 +13,6 @@ io.on('connect', function (socket) {
 	var viewportMajor;
 
 	socket.on('cursor', function (msg) {
-		console.log(msg);
 		io.emit('cursor', msg);
 	});
 
