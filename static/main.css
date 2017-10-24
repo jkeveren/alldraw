@@ -10,7 +10,6 @@ body {
 canvas {
 	position: fixed;
 	cursor: pointer;
-	/* background: radial-gradient(circle at center, black 0, white 5%, white 100%); */
 }
 
 #backupScaler {

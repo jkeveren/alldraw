@@ -4,7 +4,7 @@
 	var canvas = document.getElementById('canvas');
 	var c = canvas.getContext('2d');
 	var viewport = {};
-	var width = 0.01;
+	var width = 0.005;
 	var active = false;
 
 	var cursor = {
